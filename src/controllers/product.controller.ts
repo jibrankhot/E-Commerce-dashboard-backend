@@ -1,86 +1,126 @@
 import { Request, Response } from 'express';
-import { supabase } from '../supabase/supabase.client';
-import { Product } from '../types/product.type';
+import { productService } from '../services/product.service';
+import { StorageService } from '../services/storage.service';
 
-// CREATE PRODUCT
+/**
+ * Create Product (Supabase DB + Supabase Storage)
+ */
 export const createProduct = async (req: Request, res: Response) => {
-    const product: Omit<Product, 'id' | 'created_at'> = req.body;
+    try {
+        const files = req.files as Express.Multer.File[] | undefined;
 
-    const { data, error } = await supabase
-        .from('products')
-        .insert(product)
-        .select()
-        .single();
+        if (!files || files.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'At least one product image is required'
+            });
+        }
 
-    if (error) {
-        return res.status(400).json({ message: error.message });
+        // 1. Upload images to Supabase Storage
+        const imageUrls = await StorageService.uploadProductImages(files);
+
+        // 2. Create product in Supabase DB
+        const product = await productService.createProduct({
+            name: req.body.name,
+            description: req.body.description,
+            price: Number(req.body.price),
+            stock: Number(req.body.stock),
+            status: req.body.status,
+            images: imageUrls
+        });
+
+        return res.status(201).json({
+            success: true,
+            data: product
+        });
+    } catch (error: any) {
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to create product'
+        });
     }
-
-    return res.status(201).json(data);
 };
 
-// GET ALL PRODUCTS
+/**
+ * Get All Products
+ */
 export const getProducts = async (_req: Request, res: Response) => {
-    const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
+    try {
+        const products = await productService.getProducts();
 
-    if (error) {
-        return res.status(400).json({ message: error.message });
+        return res.status(200).json({
+            success: true,
+            data: products
+        });
+    } catch (error: any) {
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to fetch products'
+        });
     }
-
-    return res.json(data);
 };
 
-// GET PRODUCT BY ID
+/**
+ * Get Product By ID
+ */
 export const getProductById = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    try {
+        const { id } = req.params;
 
-    const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('id', id)
-        .single();
+        const product = await productService.getProductById(id);
 
-    if (error || !data) {
-        return res.status(404).json({ message: 'Product not found' });
+        return res.status(200).json({
+            success: true,
+            data: product
+        });
+    } catch (error: any) {
+        return res.status(404).json({
+            success: false,
+            message: 'Product not found'
+        });
     }
-
-    return res.json(data);
 };
 
-// UPDATE PRODUCT
+/**
+ * Update Product
+ */
 export const updateProduct = async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const updates: Partial<Product> = req.body;
+    try {
+        const { id } = req.params;
 
-    const { data, error } = await supabase
-        .from('products')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+        const product = await productService.updateProduct(id, req.body);
 
-    if (error || !data) {
-        return res.status(400).json({ message: error?.message || 'Update failed' });
+        return res.status(200).json({
+            success: true,
+            data: product
+        });
+    } catch (error: any) {
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to update product'
+        });
     }
-
-    return res.json(data);
 };
 
-// DELETE PRODUCT
+/**
+ * Delete Product
+ */
 export const deleteProduct = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    try {
+        const { id } = req.params;
 
-    const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', id);
+        await productService.deleteProduct(id);
 
-    if (error) {
-        return res.status(400).json({ message: error.message });
+        return res.status(200).json({
+            success: true,
+            message: 'Product deleted successfully'
+        });
+    } catch (error: any) {
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to delete product'
+        });
     }
-
-    return res.status(204).send();
 };
