@@ -4,35 +4,55 @@ import {
     getProducts,
     getProductById,
     updateProduct,
-    deleteProduct
+    deleteProduct,
 } from '../controllers/product.controller';
 import { upload } from '../middlewares/upload.middleware';
-// import { requireAdmin } from '../middleware/auth.middleware'; // enable later
+import { requireAdmin } from '../middlewares/auth.middleware';
 
 const router = Router();
 
 /**
  * Products Routes
- * (Auth temporarily disabled for testing)
+ * Public: Read-only
+ * Admin: Create / Update / Delete
  */
 
-// Create product with images
+/**
+ * Create product with images (ADMIN)
+ */
 router.post(
     '/',
+    requireAdmin,
     upload.array('images', 5),
     createProduct
 );
 
-// Get all products
+/**
+ * Get all products (PUBLIC)
+ */
 router.get('/', getProducts);
 
-// Get product by ID
+/**
+ * Get product by ID (PUBLIC)
+ */
 router.get('/:id', getProductById);
 
-// Update product
-router.put('/:id', updateProduct);
+/**
+ * Update product (ADMIN)
+ */
+router.put(
+    '/:id',
+    requireAdmin,
+    updateProduct
+);
 
-// Delete product
-router.delete('/:id', deleteProduct);
+/**
+ * Delete product (ADMIN)
+ */
+router.delete(
+    '/:id',
+    requireAdmin,
+    deleteProduct
+);
 
 export default router;

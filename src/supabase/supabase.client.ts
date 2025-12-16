@@ -4,23 +4,24 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 /**
- * Supabase client
+ * Supabase Admin Client
+ * - Uses SERVICE ROLE KEY (server-only)
+ * - Used for auth verification & admin operations
  * - Does NOT crash server if env vars are missing
- * - Logs warning instead
- * - Allows non-Supabase features (like image upload) to work
  */
-let supabase: SupabaseClient | null = null;
+let supabaseAdmin: SupabaseClient | null = null;
 
 if (!supabaseUrl || !supabaseServiceKey) {
     console.warn(
-        '⚠️  Supabase env vars missing. Supabase features are disabled.'
+        '⚠️  Supabase env vars missing. Supabase admin features are disabled.'
     );
 } else {
-    supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
         auth: {
-            persistSession: false
-        }
+            persistSession: false,
+            autoRefreshToken: false,
+        },
     });
 }
 
-export { supabase };
+export { supabaseAdmin };

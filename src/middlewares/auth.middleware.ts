@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { supabase } from '../supabase/supabase.client';
+import { supabaseAdmin } from '../supabase/supabase.client';
 
 export interface AuthRequest extends Request {
     user?: {
@@ -15,36 +15,74 @@ export const requireAdmin = async (
     next: NextFunction
 ) => {
     try {
+        if (!supabaseAdmin) {
+            return res.status(500).json({
+                message: 'Supabase admin client not initialized',
+            });
+        }
+
         const authHeader = req.headers.authorization;
-        if (!authHeader) {
-            return res.status(401).json({ message: 'Missing Authorization header' });
+
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                message: 'Missing or invalid Authorization header',
+            });
         }
 
-        const token = authHeader.replace('Bearer ', '');
-        const { data, error } = await supabase.auth.getUser(token);
+        const token = authHeader.split(' ')[1];
 
-        if (error || !data.user) {
-            return res.status(401).json({ message: 'Invalid token' });
+        const { data, error } = await supabaseAdmin.auth.getUser(token);
+
+        if (error || !data?.user) {
+            return res.status(401).json({
+                message: 'Invalid or expired token',
+            });
         }
 
-        const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', data.user.id)
-            .single();
+        const user = data.user;
 
-        if (profileError || profile?.role !== 'admin') {
-            return res.status(403).json({ message: 'Admin access required' });
+        // 1️⃣ Prefer role from auth metadata (fast, no DB hit)
+        const role =
+            user.app_metadata?.role ||
+            user.user_metadata?.role;
+
+        // 2️⃣ Fallback to profiles table if needed
+        let finalRole = role;
+
+        if (!finalRole) {
+            const { data: profile, error: profileError } =
+                await supabaseAdmin
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .single();
+
+            if (profileError || !profile?.role) {
+                return res.status(403).json({
+                    message: 'Admin access required',
+                });
+            }
+
+            finalRole = profile.role;
+        }
+
+        if (finalRole !== 'ADMIN') {
+            return res.status(403).json({
+                message: 'Admin access required',
+            });
         }
 
         req.user = {
-            id: data.user.id,
-            email: data.user.email,
-            role: profile.role
+            id: user.id,
+            email: user.email,
+            role: finalRole,
         };
 
         next();
-    } catch {
-        return res.status(500).json({ message: 'Auth middleware failed' });
+    } catch (error) {
+        console.error('Admin auth middleware error:', error);
+        return res.status(500).json({
+            message: 'Authentication middleware failed',
+        });
     }
 };

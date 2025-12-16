@@ -5,10 +5,16 @@ import authRoutes from './auth.routes';
 
 const router = Router();
 
-// Auth
-router.use('/auth', authRoutes);
+/**
+ * Admin Auth Routes
+ * /api/admin/auth/...
+ */
+router.use('/admin/auth', authRoutes);
 
-// Products (admin)
+/**
+ * Product Routes
+ * /api/products/...
+ */
 router.use('/products', productRoutes);
 
 export default router;
