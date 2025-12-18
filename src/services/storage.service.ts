@@ -1,16 +1,16 @@
-import { supabase } from '../supabase/supabase.client';
+import { supabaseAdmin } from '../supabase/supabase.client';
 
 export class StorageService {
     private static bucketName = 'product-images';
 
     /**
-     * Upload multiple images to Supabase Storage
+     * Upload multiple images to Supabase Storage (ADMIN)
      */
     static async uploadProductImages(
         files: Express.Multer.File[]
     ): Promise<string[]> {
-        if (!supabase) {
-            throw new Error('Supabase is not initialized');
+        if (!supabaseAdmin) {
+            throw new Error('Supabase admin client not initialized');
         }
 
         const uploadedUrls: string[] = [];
@@ -18,18 +18,18 @@ export class StorageService {
         for (const file of files) {
             const fileName = `${Date.now()}-${file.originalname}`;
 
-            const { error } = await supabase.storage
+            const { error } = await supabaseAdmin.storage
                 .from(this.bucketName)
                 .upload(fileName, file.buffer, {
                     contentType: file.mimetype,
-                    upsert: false
+                    upsert: false,
                 });
 
             if (error) {
                 throw new Error(`Image upload failed: ${error.message}`);
             }
 
-            const { data } = supabase.storage
+            const { data } = supabaseAdmin.storage
                 .from(this.bucketName)
                 .getPublicUrl(fileName);
 

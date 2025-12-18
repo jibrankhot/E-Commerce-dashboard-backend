@@ -29,6 +29,8 @@ router.post(
 
 /**
  * Get all products (PUBLIC)
+ * Optional query:
+ *  - ?categoryId=uuid
  */
 router.get('/', getProducts);
 

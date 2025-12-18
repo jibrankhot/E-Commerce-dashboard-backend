@@ -3,7 +3,7 @@ import { productService } from '../services/product.service';
 import { StorageService } from '../services/storage.service';
 
 /**
- * Create Product (Supabase DB + Supabase Storage)
+ * Create Product (Supabase DB + Supabase Storage + Category)
  */
 export const createProduct = async (req: Request, res: Response) => {
     try {
@@ -16,16 +16,24 @@ export const createProduct = async (req: Request, res: Response) => {
             });
         }
 
-        // 1. Upload images to Supabase Storage
+        const { categoryId } = req.body;
+
+        if (!categoryId) {
+            return res.status(400).json({
+                success: false,
+                message: 'categoryId is required'
+            });
+        }
+
         const imageUrls = await StorageService.uploadProductImages(files);
 
-        // 2. Create product in Supabase DB
         const product = await productService.createProduct({
             name: req.body.name,
             description: req.body.description,
             price: Number(req.body.price),
             stock: Number(req.body.stock),
             status: req.body.status,
+            categoryId,
             images: imageUrls
         });
 
@@ -34,8 +42,6 @@ export const createProduct = async (req: Request, res: Response) => {
             data: product
         });
     } catch (error: any) {
-        console.error(error);
-
         return res.status(500).json({
             success: false,
             message: error.message || 'Failed to create product'
@@ -45,14 +51,35 @@ export const createProduct = async (req: Request, res: Response) => {
 
 /**
  * Get All Products
+ * Filters:
+ *  - categoryId
+ *  - status
+ *  - search
+ * Pagination:
+ *  - page
+ *  - limit
  */
-export const getProducts = async (_req: Request, res: Response) => {
+export const getProducts = async (req: Request, res: Response) => {
     try {
-        const products = await productService.getProducts();
+        const {
+            categoryId,
+            status,
+            search,
+            page = '1',
+            limit = '10'
+        } = req.query;
+
+        const result = await productService.getProducts({
+            categoryId: categoryId ? String(categoryId) : undefined,
+            status: status ? String(status) : undefined,
+            search: search ? String(search) : undefined,
+            page: Number(page),
+            limit: Number(limit)
+        });
 
         return res.status(200).json({
             success: true,
-            data: products
+            ...result
         });
     } catch (error: any) {
         return res.status(500).json({
@@ -75,7 +102,7 @@ export const getProductById = async (req: Request, res: Response) => {
             success: true,
             data: product
         });
-    } catch (error: any) {
+    } catch {
         return res.status(404).json({
             success: false,
             message: 'Product not found'
@@ -90,11 +117,15 @@ export const updateProduct = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
-        const product = await productService.updateProduct(id, req.body);
+        const updatedProduct = await productService.updateProduct(id, {
+            ...req.body,
+            price: req.body.price ? Number(req.body.price) : undefined,
+            stock: req.body.stock ? Number(req.body.stock) : undefined
+        });
 
         return res.status(200).json({
             success: true,
-            data: product
+            data: updatedProduct
         });
     } catch (error: any) {
         return res.status(500).json({
