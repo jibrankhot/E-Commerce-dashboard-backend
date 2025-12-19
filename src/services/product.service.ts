@@ -1,3 +1,5 @@
+// src/services/product.service.ts
+
 import { supabaseAdmin } from '../supabase/supabase.client';
 
 export interface CreateProductPayload {
@@ -28,16 +30,19 @@ export const productService = {
 
         if (!category) throw new Error('Invalid categoryId');
 
+        const stock = payload.stock ?? 0;
+        const status = stock === 0 ? 'OUT_OF_STOCK' : 'ACTIVE';
+
         const { data, error } = await supabaseAdmin
             .from('products')
             .insert([{
                 name: payload.name,
                 description: payload.description,
                 price: payload.price,
-                stock: payload.stock ?? 0,
-                status: payload.status ?? 'ACTIVE',
+                stock,
+                status,
                 images: payload.images,
-                category_id: payload.categoryId
+                category_id: payload.categoryId,
             }])
             .select(`
                 *,
@@ -78,8 +83,8 @@ export const productService = {
                 page,
                 limit,
                 total: count,
-                totalPages: count ? Math.ceil(count / limit) : 0
-            }
+                totalPages: count ? Math.ceil(count / limit) : 0,
+            },
         };
     },
 
@@ -111,8 +116,13 @@ export const productService = {
 
         const updateData: any = {
             ...payload,
-            updated_at: new Date()
+            updated_at: new Date(),
         };
+
+        if (payload.stock !== undefined) {
+            updateData.status =
+                payload.stock === 0 ? 'OUT_OF_STOCK' : 'ACTIVE';
+        }
 
         if (payload.categoryId) {
             updateData.category_id = payload.categoryId;
@@ -141,5 +151,5 @@ export const productService = {
             .eq('id', id);
 
         if (error) throw error;
-    }
+    },
 };
