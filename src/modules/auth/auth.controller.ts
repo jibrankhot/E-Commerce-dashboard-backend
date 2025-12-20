@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { supabaseAdmin } from '../supabase/supabase.client';
+import { supabaseAdmin } from '../../supabase/supabase.client';
 
 /**
  * ADMIN LOGIN

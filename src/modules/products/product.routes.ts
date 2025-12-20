@@ -5,9 +5,9 @@ import {
     getProductById,
     updateProduct,
     deleteProduct,
-} from '../controllers/product.controller';
-import { upload } from '../middlewares/upload.middleware';
-import { requireAdmin } from '../middlewares/auth.middleware';
+} from './product.controller';
+import { upload } from '../uploads/upload.middleware';
+import { requireAdmin } from '../auth/auth.middleware';
 
 const router = Router();
 

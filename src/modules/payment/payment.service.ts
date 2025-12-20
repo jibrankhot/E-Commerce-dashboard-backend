@@ -1,6 +1,6 @@
 // src/services/payment.service.ts
 
-import { PAYMENT_STATUS } from '../../constants/enums';
+import { PAYMENT_STATUS } from '../utils/enums';
 import { supabaseAdmin } from '../../supabase/supabase.client';
 import { Logger } from '../utils/logger';
 

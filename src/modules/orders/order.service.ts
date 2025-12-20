@@ -8,7 +8,7 @@ import {
     OrderStatus,
 } from './order.model';
 import { Logger } from '../utils/logger';
-import { ORDER_STATUS } from '../../constants/enums';
+import { ORDER_STATUS } from '../utils/enums';
 
 export const orderService = {
     /**

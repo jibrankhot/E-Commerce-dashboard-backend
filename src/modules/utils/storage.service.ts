@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../supabase/supabase.client';
+import { supabaseAdmin } from '../../supabase/supabase.client';
 
 export class StorageService {
     private static bucketName = 'product-images';

@@ -1,7 +1,7 @@
 // src/services/product.service.ts
 
-import { supabaseAdmin } from '../supabase/supabase.client';
-import { PRODUCT_STATUS } from '../constants/enums';
+import { supabaseAdmin } from '../../supabase/supabase.client';
+import { PRODUCT_STATUS } from '../utils/enums';
 
 export interface CreateProductPayload {
     name: string;

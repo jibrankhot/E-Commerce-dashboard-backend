@@ -2,8 +2,8 @@ import { Router } from 'express';
 import {
     adminLogin,
     getAdminMe,
-} from '../controllers/auth.controller';
-import { requireAdmin } from '../middlewares/auth.middleware';
+} from './auth.controller';
+import { requireAdmin } from './auth.middleware';
 
 const router = Router();
 

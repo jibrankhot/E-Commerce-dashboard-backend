@@ -7,7 +7,7 @@ import {
     unblockUser,
     getUserOrderHistory,
 } from './user.controller';
-import { requireAdmin } from '../../middlewares/auth.middleware';
+import { requireAdmin } from '../auth/auth.middleware';
 
 const router = Router();
 

@@ -8,7 +8,7 @@ import {
     getOrderById,
     updateOrderStatus,
 } from './order.controller';
-import { requireAdmin } from '../../middlewares/auth.middleware';
+import { requireAdmin } from '../auth/auth.middleware';
 
 const router = Router();
 
