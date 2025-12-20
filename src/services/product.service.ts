@@ -1,6 +1,7 @@
 // src/services/product.service.ts
 
 import { supabaseAdmin } from '../supabase/supabase.client';
+import { PRODUCT_STATUS } from '../constants/enums';
 
 export interface CreateProductPayload {
     name: string;
@@ -31,7 +32,10 @@ export const productService = {
         if (!category) throw new Error('Invalid categoryId');
 
         const stock = payload.stock ?? 0;
-        const status = stock === 0 ? 'OUT_OF_STOCK' : 'ACTIVE';
+        const status =
+            stock === 0
+                ? PRODUCT_STATUS.OUT_OF_STOCK
+                : PRODUCT_STATUS.ACTIVE;
 
         const { data, error } = await supabaseAdmin
             .from('products')
@@ -121,7 +125,9 @@ export const productService = {
 
         if (payload.stock !== undefined) {
             updateData.status =
-                payload.stock === 0 ? 'OUT_OF_STOCK' : 'ACTIVE';
+                payload.stock === 0
+                    ? PRODUCT_STATUS.OUT_OF_STOCK
+                    : PRODUCT_STATUS.ACTIVE;
         }
 
         if (payload.categoryId) {

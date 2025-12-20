@@ -8,6 +8,7 @@ import {
     OrderStatus,
 } from './order.model';
 import { Logger } from '../utils/logger';
+import { ORDER_STATUS } from '../../constants/enums';
 
 export const orderService = {
     /**
@@ -108,7 +109,7 @@ export const orderService = {
         performedBy?: string
     ) {
         // 🔴 CANCEL = TRANSACTIONAL
-        if (status === 'CANCELLED') {
+        if (status === ORDER_STATUS.CANCELLED) {
             const { data, error } = await supabaseAdmin.rpc(
                 'cancel_order_transaction',
                 {

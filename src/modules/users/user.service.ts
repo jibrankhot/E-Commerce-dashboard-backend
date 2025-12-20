@@ -1,6 +1,7 @@
 // src/services/user.service.ts
 
 import { supabaseAdmin } from '../../supabase/supabase.client';
+import { Logger } from '../utils/logger';
 
 export const userService = {
     /**
@@ -20,7 +21,7 @@ export const userService = {
     /**
      * Block User (ADMIN)
      */
-    async blockUser(userId: string) {
+    async blockUser(userId: string, performedBy?: string) {
         const { data, error } = await supabaseAdmin
             .from('profiles')
             .update({
@@ -33,13 +34,21 @@ export const userService = {
 
         if (error) throw error;
 
+        // 🔹 AUDIT LOG
+        await Logger.log({
+            entity: 'USER',
+            entity_id: userId,
+            action: 'USER_BLOCKED',
+            performed_by: performedBy,
+        });
+
         return data;
     },
 
     /**
      * Unblock User (ADMIN)
      */
-    async unblockUser(userId: string) {
+    async unblockUser(userId: string, performedBy?: string) {
         const { data, error } = await supabaseAdmin
             .from('profiles')
             .update({
@@ -51,6 +60,14 @@ export const userService = {
             .single();
 
         if (error) throw error;
+
+        // 🔹 AUDIT LOG
+        await Logger.log({
+            entity: 'USER',
+            entity_id: userId,
+            action: 'USER_UNBLOCKED',
+            performed_by: performedBy,
+        });
 
         return data;
     },
