@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { productService } from './product.service';
-import { StorageService } from '../uploads/storage.service';
+import { StorageService } from '../utils/storage.service';
 
 /**
  * Create Product (Supabase DB + Supabase Storage + Category)
