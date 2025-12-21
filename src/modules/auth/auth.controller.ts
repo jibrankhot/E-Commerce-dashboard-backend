@@ -3,11 +3,13 @@ import { supabaseAdmin } from '../../supabase/supabase.client';
 
 /**
  * ADMIN LOGIN
+ * POST /api/auth/login
  */
 export const adminLogin = async (req: Request, res: Response) => {
     try {
         if (!supabaseAdmin) {
             return res.status(500).json({
+                success: false,
                 message: 'Supabase admin client not initialized',
             });
         }
@@ -16,6 +18,7 @@ export const adminLogin = async (req: Request, res: Response) => {
 
         if (!email || !password) {
             return res.status(400).json({
+                success: false,
                 message: 'Email and password are required',
             });
         }
@@ -28,6 +31,7 @@ export const adminLogin = async (req: Request, res: Response) => {
 
         if (error || !data?.session || !data?.user) {
             return res.status(401).json({
+                success: false,
                 message: 'Invalid credentials',
             });
         }
@@ -40,21 +44,26 @@ export const adminLogin = async (req: Request, res: Response) => {
 
         if (role !== 'ADMIN') {
             return res.status(403).json({
+                success: false,
                 message: 'Admin access required',
             });
         }
 
         return res.status(200).json({
-            accessToken: data.session.access_token,
-            user: {
-                id: user.id,
-                email: user.email,
-                role,
+            success: true,
+            data: {
+                accessToken: data.session.access_token,
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    role,
+                },
             },
         });
     } catch (error) {
         console.error('Admin login error:', error);
         return res.status(500).json({
+            success: false,
             message: 'Admin login failed',
         });
     }
@@ -62,23 +71,26 @@ export const adminLogin = async (req: Request, res: Response) => {
 
 /**
  * GET LOGGED-IN ADMIN PROFILE
- * GET /api/admin/auth/me
+ * GET /api/auth/me
  */
 export const getAdminMe = async (req: Request, res: Response) => {
     try {
-        // requireAdmin middleware already validated token & role
         const user = (req as any).user;
 
         return res.status(200).json({
-            user: {
-                id: user.id,
-                email: user.email,
-                role: user.role,
+            success: true,
+            data: {
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    role: user.role,
+                },
             },
         });
     } catch (error) {
         console.error('Admin me error:', error);
         return res.status(500).json({
+            success: false,
             message: 'Failed to fetch admin profile',
         });
     }

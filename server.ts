@@ -5,7 +5,15 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 
-import routes from './src/routes';
+/**
+ * Route imports (based on your folder structure)
+ */
+import authRoutes from './src/modules/auth/auth.routes';
+import userRoutes from './src/modules/users/user.routes';
+import productRoutes from './src/modules/products/product.routes';
+import categoryRoutes from './src/modules/categories/categories.routes';
+import orderRoutes from './src/modules/orders/order.routes';
+import paymentRoutes from './src/modules/payment/payment.routes';
 
 const app = express();
 
@@ -19,15 +27,17 @@ app.use(express.urlencoded({ extended: true }));
 /**
  * Serve uploaded images (dev only)
  */
-app.use(
-    '/uploads',
-    express.static(path.join(__dirname, 'uploads'))
-);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 /**
  * API Routes
  */
-app.use('/api', routes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/payment', paymentRoutes);
 
 /**
  * Health check
@@ -39,8 +49,8 @@ app.get('/', (_req, res) => {
 /**
  * Start server
  */
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`🚀 Server running on port ${PORT}`);
 });

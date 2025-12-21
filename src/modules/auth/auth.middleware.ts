@@ -17,6 +17,7 @@ export const requireAdmin = async (
     try {
         if (!supabaseAdmin) {
             return res.status(500).json({
+                success: false,
                 message: 'Supabase admin client not initialized',
             });
         }
@@ -25,30 +26,39 @@ export const requireAdmin = async (
 
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             return res.status(401).json({
+                success: false,
                 message: 'Missing or invalid Authorization header',
             });
         }
 
         const token = authHeader.split(' ')[1];
 
+        if (!token) {
+            return res.status(401).json({
+                success: false,
+                message: 'Authentication token missing',
+            });
+        }
+
         const { data, error } = await supabaseAdmin.auth.getUser(token);
 
         if (error || !data?.user) {
             return res.status(401).json({
+                success: false,
                 message: 'Invalid or expired token',
             });
         }
 
         const user = data.user;
 
-        // 1️⃣ Prefer role from auth metadata (fast, no DB hit)
-        const role =
+        // Prefer role from auth metadata
+        const metadataRole =
             user.app_metadata?.role ||
             user.user_metadata?.role;
 
-        // 2️⃣ Fallback to profiles table if needed
-        let finalRole = role;
+        let finalRole = metadataRole;
 
+        // Fallback to profiles table if needed
         if (!finalRole) {
             const { data: profile, error: profileError } =
                 await supabaseAdmin
@@ -59,6 +69,7 @@ export const requireAdmin = async (
 
             if (profileError || !profile?.role) {
                 return res.status(403).json({
+                    success: false,
                     message: 'Admin access required',
                 });
             }
@@ -68,6 +79,7 @@ export const requireAdmin = async (
 
         if (finalRole !== 'ADMIN') {
             return res.status(403).json({
+                success: false,
                 message: 'Admin access required',
             });
         }
@@ -82,6 +94,7 @@ export const requireAdmin = async (
     } catch (error) {
         console.error('Admin auth middleware error:', error);
         return res.status(500).json({
+            success: false,
             message: 'Authentication middleware failed',
         });
     }

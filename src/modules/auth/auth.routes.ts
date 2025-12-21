@@ -9,16 +9,18 @@ const router = Router();
 
 /**
  * Admin Authentication Routes
- * Base: /api/admin/auth
+ * Base: /api/auth
  */
 
 /**
  * Admin login (PUBLIC)
+ * POST /api/auth/login
  */
 router.post('/login', adminLogin);
 
 /**
- * Get logged-in admin profile (ADMIN)
+ * Get logged-in admin profile (ADMIN ONLY)
+ * GET /api/auth/me
  */
 router.get('/me', requireAdmin, getAdminMe);
 
