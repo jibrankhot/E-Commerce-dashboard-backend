@@ -1,3 +1,4 @@
+import fs from 'fs';
 import { supabaseAdmin } from '../../supabase/supabase.client';
 
 export class StorageService {
@@ -5,10 +6,12 @@ export class StorageService {
 
     /**
      * Upload multiple images to Supabase Storage (ADMIN)
+     * Uses disk-based multer files (file.path)
      */
     static async uploadProductImages(
         files: Express.Multer.File[]
     ): Promise<string[]> {
+
         if (!supabaseAdmin) {
             throw new Error('Supabase admin client not initialized');
         }
@@ -18,9 +21,12 @@ export class StorageService {
         for (const file of files) {
             const fileName = `${Date.now()}-${file.originalname}`;
 
+            // ✅ READ FILE FROM DISK (FIX)
+            const fileBuffer = await fs.promises.readFile(file.path);
+
             const { error } = await supabaseAdmin.storage
                 .from(this.bucketName)
-                .upload(fileName, file.buffer, {
+                .upload(fileName, fileBuffer, {
                     contentType: file.mimetype,
                     upsert: false,
                 });

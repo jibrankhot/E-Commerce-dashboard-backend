@@ -1,7 +1,7 @@
-// src/services/product.service.ts
-
-import { supabaseAdmin } from '../../supabase/supabase.client';
+import { supabaseAdmin as supabaseAdminClient } from '../../supabase/supabase.client';
 import { PRODUCT_STATUS } from '../utils/enums';
+
+const supabaseAdmin = supabaseAdminClient!; // ✅ non-null assertion (safe & intentional)
 
 export interface CreateProductPayload {
     name: string;
@@ -22,6 +22,7 @@ interface GetProductsOptions {
 }
 
 export const productService = {
+
     async createProduct(payload: CreateProductPayload) {
         const { data: category } = await supabaseAdmin
             .from('categories')
