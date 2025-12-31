@@ -29,8 +29,6 @@ router.post(
 
 /**
  * Get all products (PUBLIC)
- * Optional query:
- *  - ?categoryId=uuid
  */
 router.get('/', getProducts);
 
@@ -40,11 +38,12 @@ router.get('/', getProducts);
 router.get('/:id', getProductById);
 
 /**
- * Update product (ADMIN)
+ * ✅ Update product WITH images (ADMIN)
  */
 router.put(
     '/:id',
     requireAdmin,
+    upload.array('images', 5), // 🔥 THIS WAS MISSING
     updateProduct
 );
 

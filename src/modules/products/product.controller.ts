@@ -51,13 +51,6 @@ export const createProduct = async (req: Request, res: Response) => {
 
 /**
  * Get All Products
- * Filters:
- *  - categoryId
- *  - status
- *  - search
- * Pagination:
- *  - page
- *  - limit
  */
 export const getProducts = async (req: Request, res: Response) => {
     try {
@@ -111,22 +104,57 @@ export const getProductById = async (req: Request, res: Response) => {
 };
 
 /**
- * Update Product
+ * Update Product (✅ FINAL, CORRECT IMAGE HANDLING)
  */
 export const updateProduct = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+        const files = req.files as Express.Multer.File[] | undefined;
 
+        /**
+         * 1️⃣ Existing images MUST come from frontend
+         */
+        let existingImages: string[] = [];
+
+        if (req.body.imagesJson) {
+            try {
+                existingImages = JSON.parse(req.body.imagesJson);
+            } catch {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid imagesJson format'
+                });
+            }
+        }
+
+        /**
+         * 2️⃣ Upload new images (if any)
+         */
+        let newImageUrls: string[] = [];
+        if (files && files.length > 0) {
+            newImageUrls = await StorageService.uploadProductImages(files);
+        }
+
+        /**
+         * 3️⃣ Merge (frontend is source of truth)
+         */
+        const finalImages = [...existingImages, ...newImageUrls];
+
+        /**
+         * 4️⃣ Update product
+         */
         const updatedProduct = await productService.updateProduct(id, {
             ...req.body,
             price: req.body.price ? Number(req.body.price) : undefined,
-            stock: req.body.stock ? Number(req.body.stock) : undefined
+            stock: req.body.stock ? Number(req.body.stock) : undefined,
+            images: finalImages
         });
 
         return res.status(200).json({
             success: true,
             data: updatedProduct
         });
+
     } catch (error: any) {
         return res.status(500).json({
             success: false,
