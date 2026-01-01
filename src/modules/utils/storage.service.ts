@@ -1,6 +1,11 @@
 import fs from 'fs';
 import { supabaseAdmin } from '../../supabase/supabase.client';
 
+export interface UploadedImage {
+    publicUrl: string;
+    path: string;
+}
+
 export class StorageService {
     private static bucketName = 'product-images';
 
@@ -8,16 +13,20 @@ export class StorageService {
      * Upload multiple images to Supabase Storage (ADMIN)
      * Uses disk-based multer files (file.path)
      * Cleans up local files after upload (success or failure)
+     *
+     * Returns BOTH:
+     * - publicUrl → stored in DB
+     * - path      → used for rollback safety
      */
     static async uploadProductImages(
         files: Express.Multer.File[]
-    ): Promise<string[]> {
+    ): Promise<UploadedImage[]> {
 
         if (!supabaseAdmin) {
             throw new Error('Supabase admin client not initialized');
         }
 
-        const uploadedUrls: string[] = [];
+        const uploaded: UploadedImage[] = [];
 
         for (const file of files) {
             const fileName = `${Date.now()}-${file.originalname}`;
@@ -47,16 +56,40 @@ export class StorageService {
                     throw new Error('Failed to generate public image URL');
                 }
 
-                uploadedUrls.push(data.publicUrl);
+                uploaded.push({
+                    publicUrl: data.publicUrl,
+                    path: fileName,
+                });
             } finally {
-                // 🧹 ALWAYS delete local file (success or failure)
+                // 🧹 ALWAYS delete local file
                 if (file.path) {
                     await fs.promises.unlink(file.path).catch(() => { });
                 }
             }
         }
 
-        return uploadedUrls;
+        return uploaded;
+    }
+
+    /**
+     * 🔒 Rollback helper
+     * Deletes images by STORAGE PATH (not public URL)
+     * Best-effort: does NOT throw
+     */
+    static async deleteImagesByPath(paths: string[]): Promise<void> {
+        if (!supabaseAdmin) return;
+        if (!Array.isArray(paths) || paths.length === 0) return;
+
+        const { error } = await supabaseAdmin.storage
+            .from(this.bucketName)
+            .remove(paths);
+
+        if (error) {
+            console.error(
+                'Rollback image deletion failed:',
+                error.message
+            );
+        }
     }
 
     /**
@@ -68,8 +101,6 @@ export class StorageService {
         if (!supabaseAdmin) return;
         if (!Array.isArray(imageUrls) || imageUrls.length === 0) return;
 
-        // Example public URL:
-        // https://xxxx.supabase.co/storage/v1/object/public/product-images/abc.jpg
         const filePaths = imageUrls
             .map(url => {
                 const marker = `/${this.bucketName}/`;
@@ -86,7 +117,6 @@ export class StorageService {
             .from(this.bucketName)
             .remove(filePaths);
 
-        // Never block product deletion because of storage issues
         if (error) {
             console.error(
                 'Failed to delete product images from storage:',
